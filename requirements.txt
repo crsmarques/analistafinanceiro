@@ -1,0 +1,1 @@
+streamlit>=1.30.0requests>=2.31.0pandas>=2.0.0yfinance>=0.2.35plotly>=5.18.0

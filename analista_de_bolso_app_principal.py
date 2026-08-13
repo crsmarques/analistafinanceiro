@@ -23,7 +23,7 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
-    /* Ocultar barra lateral padrão e footers */
+    /* Ocultar barra lateral e footers */
     [data-testid="stSidebar"] { display: none !important; }
     footer { visibility: hidden !important; }
     header { visibility: hidden !important; }
@@ -46,7 +46,7 @@ st.markdown("""
         padding: 1.25rem 2rem;
         border-radius: 16px;
         border: 1px solid #2d3548;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
     .app-title {
@@ -76,16 +76,16 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 
-    /* Botões de Navegação Customizados */
+    /* Botões Agrupados de Navegação (Pill Style) */
     div.stButton > button {
         width: 100%;
-        height: 48px;
+        height: 42px;
         background-color: #141824 !important;
         color: #94a3b8 !important;
         border: 1px solid #2d3548 !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         font-weight: 600 !important;
-        font-size: 0.95rem !important;
+        font-size: 0.9rem !important;
         transition: all 0.2s ease-in-out !important;
     }
     div.stButton > button:hover {
@@ -155,19 +155,45 @@ st.markdown("""
         background-color: #141824;
         border: 1px solid #2d3548;
         border-radius: 14px;
-        padding: 1.5rem;
+        padding: 1.25rem 1.5rem;
         margin-bottom: 1rem;
     }
     .info-card-blue { border-left: 4px solid #3b82f6; }
     .info-card-green { border-left: 4px solid #10b981; }
     .info-card-red { border-left: 4px solid #ef4444; }
 
-    /* ESTILIZAÇÃO COMPLETA DAS TABELAS DARK (DARK MODE TOTAL) */
-    [data-testid="stDataFrame"] {
-        background-color: #141824 !important;
-        border-radius: 12px !important;
-        border: 1px solid #2d3548 !important;
-        padding: 8px !important;
+    /* TABELA CUSTOMIZADA TOTALMENTE DARK */
+    .dark-table-container {
+        background-color: #141824;
+        border: 1px solid #2d3548;
+        border-radius: 14px;
+        overflow-x: auto;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .dark-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #e2e8f0;
+        font-size: 0.9rem;
+    }
+    .dark-table th {
+        background-color: #1e2333;
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #2d3548;
+    }
+    .dark-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #1e2333;
+    }
+    .dark-table tr:hover {
+        background-color: #1a1f2e;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -186,6 +212,29 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ==========================================
+# GERENCIAMENTO DE ESTADO E NAVEGAÇÃO COMPACTA
+# ==========================================
+if 'aba_ativa' not in st.session_state:
+    st.session_state.aba_ativa = "cripto"
+
+# Agrupando os botões no centro/esquerda em colunas menores
+col_nav_1, col_nav_2, col_nav_3, _ = st.columns([1.2, 1.2, 1.5, 3])
+
+with col_nav_1:
+    if st.button("🪙 Cripto"):
+        st.session_state.aba_ativa = "cripto"
+
+with col_nav_2:
+    if st.button("📈 Ações B3"):
+        st.session_state.aba_ativa = "acoes"
+
+with col_nav_3:
+    if st.button("💡 Pílulas de conhecimento"):
+        st.session_state.aba_ativa = "pilulas"
+
+st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
 # ==========================================
 # FUNÇÕES DE COLETA DE DADOS (APIs)
@@ -208,7 +257,7 @@ def get_coingecko_top_cryptos():
         params = {
             'vs_currency': 'brl',
             'order': 'market_cap_desc',
-            'per_page': 20,
+            'per_page': 25,
             'page': 1,
             'sparkline': 'false',
             'price_change_percentage': '24h'
@@ -256,8 +305,8 @@ def get_b3_stocks(tickers):
             t = yf.Ticker(f"{symbol}.SA")
             info = t.info
             price = info.get('currentPrice') or info.get('regularMarketPrice') or 0.0
-            pvp = info.get('priceToBook') or "N/A"
-            pl = info.get('trailingPE') or "N/A"
+            pvp = info.get('priceToBook') if isinstance(info.get('priceToBook'), (int, float)) else 0.0
+            pl = info.get('trailingPE') if isinstance(info.get('trailingPE'), (int, float)) else 0.0
             dy = (info.get('dividendYield') or 0.0) * 100
             name = info.get('shortName') or symbol
 
@@ -265,8 +314,8 @@ def get_b3_stocks(tickers):
                 'Ticker': symbol,
                 'Empresa': name,
                 'Preço (R$)': round(price, 2),
-                'P/VP': round(pvp, 2) if isinstance(pvp, (int, float)) else pvp,
-                'P/L': round(pl, 2) if isinstance(pl, (int, float)) else pl,
+                'P/VP': round(pvp, 2),
+                'P/L': round(pl, 2),
                 'DY (%)': round(dy, 2)
             })
         except Exception:
@@ -274,33 +323,11 @@ def get_b3_stocks(tickers):
     return pd.DataFrame(results)
 
 # ==========================================
-# GERENCIAMENTO DE ESTADO E BOTÕES RENOMEADOS
-# ==========================================
-if 'aba_ativa' not in st.session_state:
-    st.session_state.aba_ativa = "cripto"
-
-col_btn1, col_btn2, col_btn3 = st.columns(3)
-
-with col_btn1:
-    if st.button("🪙 Cripto"):
-        st.session_state.aba_ativa = "cripto"
-
-with col_btn2:
-    if st.button("📈 Ações B3"):
-        st.session_state.aba_ativa = "acoes"
-
-with col_btn3:
-    if st.button("💡 Pílulas de conhecimento"):
-        st.session_state.aba_ativa = "pilulas"
-
-st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
-# ==========================================
 # CONTEÚDO DAS TELAS
 # ==========================================
 
 # ------------------------------------------
-# TELAS 1: CRIPTO
+# TELA 1: CRIPTO
 # ------------------------------------------
 if st.session_state.aba_ativa == "cripto":
     fg_val, fg_status = get_fear_and_greed()
@@ -361,80 +388,170 @@ if st.session_state.aba_ativa == "cripto":
             </p>
         </div>
         """, unsafe_allow_html=True)
-    elif fg_val >= 70:
-        st.markdown("""
-        <div class="info-card info-card-red">
-            <h4 style="margin:0; color:#ef4444;">⚠️ Análise do Bot: Mercado em Euforia / Ganância</h4>
-            <p style="margin-top:6px; margin-bottom:0; color:#cbd5e1; font-size:0.9rem;">
-                Cuidado com entradas no topo. Momento de proteger lucros e manter caixa para correções.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
 
-    st.subheader("📊 Top 20 Criptomoedas & Monitoramento de Sinais")
+    st.subheader("📊 Top Criptomoedas & Sinais Quant")
     df_crypto = get_coingecko_top_cryptos()
     
     if not df_crypto.empty:
         def gerar_sinal(row):
             var = row.get('price_change_percentage_24h', 0) or 0
             if var < -6.0:
-                return "🟢 Oportunidade (Queda Forte)"
+                return "<span class='status-green'>🟢 Oportunidade (Queda)</span>"
             elif var > 10.0:
-                return "🔴 Esticado (Aguardar Recompra)"
+                return "<span class='status-red'>🔴 Esticado</span>"
             else:
-                return "🟡 Neutro / Acompanhar"
+                return "<span class='status-amber'>🟡 Neutro</span>"
 
-        df_crypto['Sinal da Ferramenta'] = df_crypto.apply(gerar_sinal, axis=1)
-        df_show = df_crypto[['name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap', 'Sinal da Ferramenta']].copy()
-        df_show.columns = ['Ativo', 'Símbolo', 'Preço (R$)', 'Variação 24h (%)', 'Cap. Mercado (R$)', 'Análise Quant']
-        df_show['Símbolo'] = df_show['Símbolo'].str.upper()
+        rows_html = ""
+        for _, row in df_crypto.iterrows():
+            var = row.get('price_change_percentage_24h', 0) or 0
+            var_color = "#10b981" if var >= 0 else "#ef4444"
+            sinal = gerar_sinal(row)
+            
+            rows_html += f"""
+            <tr>
+                <td><b>{row['name']}</b></td>
+                <td><span style='color:#94a3b8;'>{row['symbol'].upper()}</span></td>
+                <td>R$ {row['current_price']:,.2f}</td>
+                <td style='color:{var_color}; font-weight:600;'>{var:+.2f}%</td>
+                <td>R$ {row['market_cap']:,.0f}</td>
+                <td>{sinal}</td>
+            </tr>
+            """
 
-        st.dataframe(
-            df_show.style.format({
-                'Preço (R$)': 'R$ {:,.2f}',
-                'Variação 24h (%)': '{:+.2f}%',
-                'Cap. Mercado (R$)': 'R$ {:,.0f}'
-            }),
-            use_container_width=True,
-            height=480
-        )
+        table_html = f"""
+        <div class="dark-table-container">
+            <table class="dark-table">
+                <thead>
+                    <tr>
+                        <th>Ativo</th>
+                        <th>Símbolo</th>
+                        <th>Preço (R$)</th>
+                        <th>Variação 24h</th>
+                        <th>Cap. Mercado</th>
+                        <th>Análise Quant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows_html}
+                </tbody>
+            </table>
+        </div>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
 
 # ------------------------------------------
-# TELAS 2: AÇÕES B3
+# TELA 2: AÇÕES B3 (COM PAINEL DE FILTROS)
 # ------------------------------------------
 elif st.session_state.aba_ativa == "acoes":
     st.markdown("""
     <div class="info-card info-card-blue">
-        <h4 style="margin:0; color:#60a5fa;">🔎 Monitor de Microcaps, Penny Stocks & Blue Chips</h4>
+        <h4 style="margin:0; color:#60a5fa;">🔎 Monitor de Ações da B3 com Filtros Customizados</h4>
         <p style="margin-top:6px; margin-bottom:0; color:#cbd5e1; font-size:0.9rem;">
-            Varredura de múltiplos na B3. Ações com P/VP menor que 0.85 negociam com desconto patrimonial.
+            Ajuste os parâmetros abaixo para encontrar Penny Stocks, empresas descontadas (P/VP < 1.0) ou pagadoras de dividendos.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    tickers = ["ENJU3", "BHIA3", "OIBR3", "CASH3", "VIVR3", "BBAS3", "PETR4", "VALE3", "ITSA4"]
+    # PAINEL DE FILTROS DINÂMICOS
+    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
     
-    with st.spinner("Buscando cotações e balanços na B3..."):
-        df_stocks = get_b3_stocks(tickers)
+    with col_f1:
+        preco_max = st.slider("Preço Máximo da Ação (R$):", 1.0, 100.0, 50.0)
+    with col_f2:
+        pvp_max = st.slider("P/VP Máximo (Desconto):", 0.2, 3.0, 1.5)
+    with col_f3:
+        filtro_categoria = st.selectbox("Categoria:", ["Todas", "Penny Stocks (< R$ 2.00)", "Descontadas (P/VP < 0.85)", "Dividendos"])
+    with col_f4:
+        busca_ticker = st.text_input("Buscar Ticker / Nome:", "").upper()
+
+    # Lista ampliada de tickers para escaneamento
+    tickers_b3 = [
+        "ENJU3", "BHIA3", "OIBR3", "CASH3", "VIVR3", 
+        "BBAS3", "PETR4", "VALE3", "ITSA4", "WEGE3", 
+        "MGLU3", "LREN3", "USIM5", "CSNA3", "CMIN3"
+    ]
+    
+    with st.spinner("Escaneando mercado B3..."):
+        df_stocks = get_b3_stocks(tickers_b3)
 
     if not df_stocks.empty:
-        def classificar_acao(row):
+        # APLICANDO FILTROS
+        df_filtered = df_stocks.copy()
+        
+        # Filtro de Preço
+        df_filtered = df_filtered[df_filtered['Preço (R$)'] <= preco_max]
+        
+        # Filtro de P/VP
+        df_filtered = df_filtered[df_filtered['P/VP'] <= pvp_max]
+        
+        # Filtro de Categoria
+        if filtro_categoria == "Penny Stocks (< R$ 2.00)":
+            df_filtered = df_filtered[df_filtered['Preço (R$)'] < 2.0]
+        elif filtro_categoria == "Descontadas (P/VP < 0.85)":
+            df_filtered = df_filtered[(df_filtered['P/VP'] > 0) & (df_filtered['P/VP'] < 0.85)]
+        elif filtro_categoria == "Dividendos":
+            df_filtered = df_filtered[df_filtered['DY (%)'] > 5.0]
+
+        # Filtro por Busca de Texto
+        if busca_ticker:
+            df_filtered = df_filtered[
+                df_filtered['Ticker'].str.contains(busca_ticker) | 
+                df_filtered['Empresa'].str.upper().str.contains(busca_ticker)
+            ]
+
+        # Renderização da Tabela Dark
+        rows_html = ""
+        for _, row in df_filtered.iterrows():
             preco = row['Preço (R$)']
             pvp = row['P/VP']
+            
             if preco < 2.0:
-                return "⚡ Penny Stock / Risco Extremo"
-            elif isinstance(pvp, (int, float)) and 0 < pvp < 0.85:
-                return "🟢 Descontada (P/VP < 0.85)"
-            elif isinstance(pvp, (int, float)) and pvp >= 0.85:
-                return "🔵 Empresa Sólida / Dividendos"
+                status = "<span class='status-red'>⚡ Penny Stock</span>"
+            elif 0 < pvp < 0.85:
+                status = "<span class='status-green'>🟢 Descontada (P/VP < 0.85)</span>"
             else:
-                return "🟡 Acompanhar"
+                status = "<span class='status-amber'>🔵 Acompanhar</span>"
 
-        df_stocks['Status do Bot'] = df_stocks.apply(classificar_acao, axis=1)
-        st.dataframe(df_stocks, use_container_width=True, height=450)
+            rows_html += f"""
+            <tr>
+                <td><b>{row['Ticker']}</b></td>
+                <td><span style='color:#94a3b8;'>{row['Empresa']}</span></td>
+                <td>R$ {row['Preço (R$)']:.2f}</td>
+                <td>{row['P/VP'] if row['P/VP'] > 0 else 'N/A'}</td>
+                <td>{row['P/L'] if row['P/L'] > 0 else 'N/A'}</td>
+                <td style='color:#10b981;'>{row['DY (%)']:.2f}%</td>
+                <td>{status}</td>
+            </tr>
+            """
+
+        if rows_html == "":
+            st.warning("Nenhuma ação encontrada com os filtros selecionados. Tente aumentar o preço máximo ou o P/VP.")
+        else:
+            table_html = f"""
+            <div class="dark-table-container">
+                <table class="dark-table">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Empresa</th>
+                            <th>Preço (R$)</th>
+                            <th>P/VP</th>
+                            <th>P/L</th>
+                            <th>DY (%)</th>
+                            <th>Status do Bot</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
+            </div>
+            """
+            st.markdown(table_html, unsafe_allow_html=True)
 
 # ------------------------------------------
-# TELAS 3: PÍLULAS DE CONHECIMENTO
+# TELA 3: PÍLULAS DE CONHECIMENTO
 # ------------------------------------------
 elif st.session_state.aba_ativa == "pilulas":
     col_p1, col_p2 = st.columns(2)
@@ -457,7 +574,7 @@ elif st.session_state.aba_ativa == "pilulas":
         </div>
         """, unsafe_allow_html=True)
         
-    with col_p1 if False else col_p2:
+    with col_p2:
         st.markdown("""
         <div class="info-card info-card-green">
             <span class="status-green">Mercado Cripto</span>

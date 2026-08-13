@@ -2,35 +2,201 @@ import streamlit as st
 import requests
 import pandas as pd
 import yfinance as yf
-import plotly.graph_objects as go
 
 # ==========================================
-# CONFIGURAÇÃO INICIAL DA PÁGINA
+# CONFIGURAÇÃO INICIAL DA PÁGINA & THEME
 # ==========================================
 st.set_page_config(
-    page_title="Analista de Bolso",
+    page_title="Analista de Bolso | Terminal Financiero",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS customizada
+# Custom CSS para Padrão Fintech Dark Moderno (UI/UX)
 st.markdown("""
 <style>
-    .main { background-color: #0e1117; }
-    .stMetric { background-color: #1e222d; padding: 15px; border-radius: 10px; border: 1px solid #2a2e39; }
-    .pill-card { background-color: #1e222d; padding: 20px; border-radius: 12px; border-left: 5px solid #10b981; margin-bottom: 15px; }
-    .risk-card { background-color: #1e222d; padding: 20px; border-radius: 12px; border-left: 5px solid #ef4444; margin-bottom: 15px; }
+    /* Reset e Fundo Dark Profundo */
+    .stApp {
+        background-color: #0b0e14;
+        color: #e2e8f0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    /* Ocultar barra lateral padrão e footers */
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Container Principal */
+    .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
+        max-width: 1400px;
+    }
+
+    /* Header e Banner Superior */
+    .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #141824 0%, #1e2333 100%);
+        padding: 1.25rem 2rem;
+        border-radius: 16px;
+        border: 1px solid #2d3548;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .app-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .app-subtitle {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+
+    /* Badge do Perfil */
+    .profile-badge {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    /* Estilização dos Botões do Topo (Navegação) */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #141824;
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid #2d3548;
+        margin-bottom: 1.5rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        border-radius: 8px;
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: none !important;
+        background-color: transparent;
+        padding: 0 20px;
+        transition: all 0.2s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #3b82f6 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Cards Finanças / Métricas */
+    .metric-card {
+        background-color: #141824;
+        border: 1px solid #2d3548;
+        border-radius: 14px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .metric-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+    
+    /* Status Badges */
+    .status-green {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-amber {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-red {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Cards Informativos */
+    .info-card {
+        background-color: #141824;
+        border: 1px solid #2d3548;
+        border-radius: 14px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .info-card-blue { border-left: 4px solid #3b82f6; }
+    .info-card-green { border-left: 4px solid #10b981; }
+    .info-card-red { border-left: 4px solid #ef4444; }
+
+    /* Tabelas estilizadas */
+    [data-testid="stDataFrame"] {
+        background-color: #141824;
+        border-radius: 12px;
+        border: 1px solid #2d3548;
+        overflow: hidden;
+    }
 </style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# HEADER TOP BAR (FINTECH STYLE)
+# ==========================================
+st.markdown("""
+<div class="app-header">
+    <div>
+        <div class="app-title">⚡ Analista de Bolso</div>
+        <div class="app-subtitle">Terminal de Inteligência Financeira & Análises Quantitativas</div>
+    </div>
+    <div class="profile-badge">
+        🎯 Scanner Diário de Oportunidades
+    </div>
+</div>
 """, unsafe_allow_html=True)
 
 # ==========================================
 # FUNÇÕES DE COLETA DE DADOS (APIs)
 # ==========================================
-
 @st.cache_data(ttl=300)
 def get_fear_and_greed():
-    """Busca o Crypto Fear & Greed Index"""
     try:
         url = "https://api.alternative.me/fng/?limit=1"
         res = requests.get(url, timeout=5).json()
@@ -38,11 +204,10 @@ def get_fear_and_greed():
         status = res['data'][0]['value_classification']
         return val, status
     except Exception:
-        return 50, "Neutro (Offline)"
+        return 50, "Neutro"
 
 @st.cache_data(ttl=300)
 def get_coingecko_top_cryptos():
-    """Busca as top criptos do mercado via CoinGecko API"""
     try:
         url = "https://api.coingecko.com/api/v3/coins/markets"
         params = {
@@ -61,10 +226,9 @@ def get_coingecko_top_cryptos():
         return pd.DataFrame()
 
 @st.cache_data(ttl=300)
-def get_binance_ticker(symbol="BTCBRL"):
-    """Busca dados em tempo real da Binance API pública"""
+def get_binance_btc():
     try:
-        url = f"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}"
+        url = "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCBRL"
         res = requests.get(url, timeout=5).json()
         return {
             'last_price': float(res['lastPrice']),
@@ -77,100 +241,129 @@ def get_binance_ticker(symbol="BTCBRL"):
         return None
 
 @st.cache_data(ttl=600)
-def get_b3_stock_data(tickers):
-    """Busca dados das Ações B3 via yfinance"""
+def get_b3_stocks(tickers):
     results = []
     for symbol in tickers:
         try:
-            ticker_formatted = f"{symbol}.SA" if not symbol.endswith(".SA") else symbol
-            t = yf.Ticker(ticker_formatted)
+            t = yf.Ticker(f"{symbol}.SA")
             info = t.info
-            
             price = info.get('currentPrice') or info.get('regularMarketPrice') or 0.0
-            pvp = info.get('priceToBook') or 0.0
-            pl = info.get('trailingPE') or 0.0
+            pvp = info.get('priceToBook') or "N/A"
+            pl = info.get('trailingPE') or "N/A"
             dy = (info.get('dividendYield') or 0.0) * 100
             name = info.get('shortName') or symbol
 
             results.append({
-                'Ticker': symbol.replace(".SA", ""),
-                'Nome': name,
+                'Ticker': symbol,
+                'Empresa': name,
                 'Preço (R$)': round(price, 2),
-                'P/VP': round(pvp, 2) if pvp else "N/A",
-                'P/L': round(pl, 2) if pl else "N/A",
-                'DY (%)': round(dy, 2) if dy else 0.0
+                'P/VP': round(pvp, 2) if isinstance(pvp, (int, float)) else pvp,
+                'P/L': round(pl, 2) if isinstance(pl, (int, float)) else pl,
+                'DY (%)': round(dy, 2)
             })
         except Exception:
             continue
     return pd.DataFrame(results)
 
 # ==========================================
-# BARRA LATERAL (NAVEGAÇÃO)
+# BOTÕES/NAVEGAÇÃO NO TOPO (3 ABAS PRINCIPAIS)
 # ==========================================
-st.sidebar.title("⚡ Analista de Bolso")
-st.sidebar.caption("Seu Copiloto de Investimentos Inteligente")
+tab_cripto, tab_acoes, tab_pilulas = st.tabs([
+    "🪙 Cripto & Alertas Quant", 
+    "📈 Ações B3 & Penny Stocks", 
+    "💡 Pílulas de Mercado"
+])
 
-opcao_menu = st.sidebar.radio(
-    "Menu Principais:",
-    ["🪙 Criptomoedas & Alertas", "📈 Ações B3 & Penny Stocks", "💡 Pílulas de Aprendizado", "🛡️ Calculadora de Risco (R$ 10k)"]
-)
-
-st.sidebar.divider()
-st.sidebar.info("**Perfil:** Agressivo Consciente\n\n**Foco:** Preservação de Capital + Assimetria de Risco")
-
-# ==========================================
-# ABA 1: CRIPTOMOEDAS & ALERTAS
-# ==========================================
-if opcao_menu == "🪙 Criptomoedas & Alertas":
-    st.title("🪙 Mercado de Criptomoedas & Alertas Quant")
-    st.write("Análise em tempo real integrada às APIs CoinGecko, Binance e Alternative.me.")
-
+# ------------------------------------------
+# TAB 1: CRIPTO & ALERTAS
+# ------------------------------------------
+with tab_cripto:
     fg_val, fg_status = get_fear_and_greed()
+    btc_data = get_binance_btc()
+
+    # Grid de Métrica Superior
+    c1, c2, c3, c4 = st.columns(4)
     
-    col_fg1, col_fg2 = st.columns([1, 2])
-    with col_fg1:
-        st.metric(label="Sentimento do Mercado (Fear & Greed)", value=f"{fg_val}/100", delta=fg_status)
-    
-    with col_fg2:
-        if fg_val <= 25:
-            st.error("🔴 **MEDO EXTREMO:** Pânico no mercado. Zona histórica de oportunidade para compras fracionadas.")
-        elif fg_val <= 45:
-            st.warning("🟡 **MEDO:** Investidores receosos. Boa hora para analisar projetos sólidos descontados.")
-        elif fg_val <= 60:
-            st.info("⚪ **NEUTRO:** Mercado sem tendência definida. Siga o plano sem empolgação.")
-        else:
-            st.success("🟢 **GANÂNCIA / EUFORIA:** Cuidado com compras no topo! Bom momento para proteger lucros.")
+    with c1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Sentimento Mercado (Fear & Greed)</div>
+            <div class="metric-value">{fg_val} <span style="font-size: 1rem; color: #94a3b8;">/100</span></div>
+            <div style="margin-top: 8px;">
+                <span class="{ 'status-red' if fg_val <= 30 else 'status-amber' if fg_val <= 60 else 'status-green' }">{fg_status.upper()}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with c2:
+        btc_price = f"R$ {btc_data['last_price']:,.2f}" if btc_data else "N/A"
+        btc_var = f"{btc_data['change_pct']:+.2f}%" if btc_data else "0%"
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Bitcoin (Binance BTC/BRL)</div>
+            <div class="metric-value" style="font-size: 1.4rem;">{btc_price}</div>
+            <div style="margin-top: 8px;">
+                <span class="{ 'status-green' if btc_data and btc_data['change_pct'] >= 0 else 'status-red' }">{btc_var} (24h)</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
+    with c3:
+        btc_high = f"R$ {btc_data['high']:,.2f}" if btc_data else "N/A"
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Máxima 24h (BTC)</div>
+            <div class="metric-value" style="font-size: 1.4rem;">{btc_high}</div>
+            <div style="margin-top: 8px;"><span class="status-amber">Topo Diário</span></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.subheader("⚡ Bitcoin em Tempo Real (Binance)")
-    btc_data = get_binance_ticker("BTCBRL")
-    if btc_data:
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Preço Atual", f"R$ {btc_data['last_price']:,.2f}", f"{btc_data['change_pct']:.2f}% (24h)")
-        c2.metric("Mínima 24h", f"R$ {btc_data['low']:,.2f}")
-        c3.metric("Máxima 24h", f"R$ {btc_data['high']:,.2f}")
-        c4.metric("Volume 24h", f"{btc_data['volume']:,.2f} BTC")
+    with c4:
+        btc_low = f"R$ {btc_data['low']:,.2f}" if btc_data else "N/A"
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Mínima 24h (BTC)</div>
+            <div class="metric-value" style="font-size: 1.4rem;">{btc_low}</div>
+            <div style="margin-top: 8px;"><span class="status-amber">Suporte Diário</span></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
+    # Insight do Bot
+    if fg_val <= 30:
+        st.markdown("""
+        <div class="info-card info-card-green">
+            <h4 style="margin:0; color:#10b981;">💡 Análise do Bot: Mercado em Medo Extremo</h4>
+            <p style="margin-top:6px; margin-bottom:0; color:#cbd5e1; font-size:0.9rem;">
+                Historicamente, compras fracionadas durante períodos de pânico geram as maiores assimetrias de retorno no médio/longo prazo. Evite alavancagem.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    elif fg_val >= 70:
+        st.markdown("""
+        <div class="info-card info-card-red">
+            <h4 style="margin:0; color:#ef4444;">⚠️ Análise do Bot: Mercado em Euforia / Ganância</h4>
+            <p style="margin-top:6px; margin-bottom:0; color:#cbd5e1; font-size:0.9rem;">
+                Cuidado com entradas no topo. Momento de proteger lucros e manter caixa para correções.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.subheader("📊 Top 20 Criptos & Análise Automática de Sinal")
+    st.subheader("📊 Top 20 Criptomoedas & Monitoramento de Sinais")
     df_crypto = get_coingecko_top_cryptos()
     
     if not df_crypto.empty:
-        def sinal_crypto(row):
-            var_24h = row.get('price_change_percentage_24h', 0) or 0
-            if var_24h < -7.0:
+        def gerar_sinal(row):
+            var = row.get('price_change_percentage_24h', 0) or 0
+            if var < -6.0:
                 return "🟢 Oportunidade (Queda Forte)"
-            elif var_24h > 12.0:
-                return "🔴 Risco (Esticou no Curto Prazo)"
+            elif var > 10.0:
+                return "🔴 Esticado (Aguardar Recompra)"
             else:
                 return "🟡 Neutro / Acompanhar"
 
-        df_crypto['Sinal Automático'] = df_crypto.apply(sinal_crypto, axis=1)
-        
-        df_show = df_crypto[['name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap', 'Sinal Automático']].copy()
-        df_show.columns = ['Moeda', 'Símbolo', 'Preço (R$)', 'Variação 24h (%)', 'Cap. Mercado (R$)', 'Análise da Ferramenta']
+        df_crypto['Sinal da Ferramenta'] = df_crypto.apply(gerar_sinal, axis=1)
+        df_show = df_crypto[['name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap', 'Sinal da Ferramenta']].copy()
+        df_show.columns = ['Ativo', 'Símbolo', 'Preço (R$)', 'Variação 24h (%)', 'Cap. Mercado (R$)', 'Análise Quant']
         df_show['Símbolo'] = df_show['Símbolo'].str.upper()
 
         st.dataframe(
@@ -180,115 +373,81 @@ if opcao_menu == "🪙 Criptomoedas & Alertas":
                 'Cap. Mercado (R$)': 'R$ {:,.0f}'
             }),
             use_container_width=True,
-            height=400
+            height=450
         )
 
-# ==========================================
-# ABA 2: AÇÕES B3 & PENNY STOCKS
-# ==========================================
-elif opcao_menu == "📈 Ações B3 & Penny Stocks":
-    st.title("📈 Monitor de Ações da B3 & Penny Stocks")
-    st.write("Filtro diário de múltiplos de valuation e ações baratas/turnarounds.")
+# ------------------------------------------
+# TAB 2: AÇÕES B3 & PENNY STOCKS
+# ------------------------------------------
+with tab_acoes:
+    st.markdown("""
+    <div class="info-card info-card-blue">
+        <h4 style="margin:0; color:#60a5fa;">🔎 Monitor de Microcaps, Penny Stocks & Blue Chips</h4>
+        <p style="margin-top:6px; margin-bottom:0; color:#cbd5e1; font-size:0.9rem;">
+            Varredura de múltiplos na B3. Ações com P/VP menor que 0.85 negociam com desconto patrimonial.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    tickers_monitor = ["ENJU3", "BHIA3", "OIBR3", "CASH3", "VIVR3", "BBAS3", "PETR4", "VALE3", "ITSA4"]
+    tickers = ["ENJU3", "BHIA3", "OIBR3", "CASH3", "VIVR3", "BBAS3", "PETR4", "VALE3", "ITSA4"]
     
-    with st.spinner("Buscando cotações atualizadas na B3..."):
-        df_stocks = get_b3_stock_data(tickers_monitor)
+    with st.spinner("Buscando cotações e balanços na B3..."):
+        df_stocks = get_b3_stocks(tickers)
 
     if not df_stocks.empty:
         def classificar_acao(row):
-            pvp = row['P/VP']
             preco = row['Preço (R$)']
-            
+            pvp = row['P/VP']
             if preco < 2.0:
                 return "⚡ Penny Stock / Risco Extremo"
-            elif isinstance(pvp, (int, float)) and pvp > 0 and pvp < 0.85:
+            elif isinstance(pvp, (int, float)) and 0 < pvp < 0.85:
                 return "🟢 Descontada (P/VP < 0.85)"
+            elif isinstance(pvp, (int, float)) and pvp >= 0.85:
+                return "🔵 Empresa Sólida / Dividendos"
             else:
-                return "🔵 Acompanhar / Dividendos"
+                return "🟡 Acompanhar"
 
-        df_stocks['Status do App'] = df_stocks.apply(classificar_acao, axis=1)
+        df_stocks['Status do Bot'] = df_stocks.apply(classificar_acao, axis=1)
         st.dataframe(df_stocks, use_container_width=True)
 
-        st.divider()
-        col_a1, col_a2 = st.columns(2)
-        with col_a1:
-            st.markdown("""
-            <div class="risk-card">
-                <h4>⚠️ Alerta de Penny Stocks (ENJU3, OIBR3)</h4>
-                <p>Ações na casa dos centavos possuem volatilidade extrema e dependem de reestruturações. Mantenha no máximo 1% a 2% da sua carteira aqui.</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        with col_a2:
-            st.markdown("""
-            <div class="pill-card">
-                <h4>🛡️ Âncoras de Carteira (BBAS3, ITSA4)</h4>
-                <p>Empresas consolidadas que geram lucros e pagam dividendos. Elas protegem seu patrimônio enquanto você busca assimetria nas apostas maiores.</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-# ==========================================
-# ABA 3: PÍLULAS DE APRENDIZADO DIÁRIO
-# ==========================================
-elif opcao_menu == "💡 Pílulas de Aprendizado":
-    st.title("💡 Pílulas Diárias de Mercado Financeiro")
-
-    pilulas = [
-        {
-            "titulo": "1. O que é P/VP e como usar?",
-            "categoria": "Análise Fundamentalista",
-            "conteudo": "Preço sobre Valor Patrimonial. Se o P/VP é 0,80, você está comprando R$ 1,00 de patrimônio por R$ 0,80. É um indicador clássico de desconto em ações e FIIs."
-        },
-        {
-            "titulo": "2. O Risco do Agrupamento de Ações",
-            "categoria": "Gestão de Risco",
-            "conteudo": "Quando uma ação fica abaixo de R$ 1,00 por muito tempo, a B3 obriga o agrupamento (ex: 10 ações viram 1). O valor total que você possui continua igual, mas o ativo ganha espaço para continuar caindo."
-        },
-        {
-            "titulo": "3. O Conceito de Assimetria de Risco",
-            "categoria": "Estratégia quantitativa",
-            "conteudo": "Assimetria positiva é quando seu risco de perda é fixo e conhecido (ex: perder R$ 200), mas seu potencial de ganho é exponencial (ex: virar R$ 2.000). A chave para acelerar patrimônio é buscar assimetria."
-        }
-    ]
-
-    for p in pilulas:
-        st.markdown(f"""
-        <div class="pill-card">
-            <span style="background-color: #10b981; color: white; padding: 3px 8px; border-radius: 5px; font-size: 12px;">{p['categoria']}</span>
-            <h3 style="margin-top: 10px; color: #f8fafc;">{p['titulo']}</h3>
-            <p style="color: #94a3b8; font-size: 16px;">{p['conteudo']}</p>
+# ------------------------------------------
+# TAB 3: PÍLULAS DE MERCADO
+# ------------------------------------------
+with tab_pilulas:
+    col_p1, col_p2 = st.columns(2)
+    
+    with col_p1:
+        st.markdown("""
+        <div class="info-card info-card-blue">
+            <span class="status-amber">Análise Fundamentalista</span>
+            <h3 style="color:#ffffff; margin-top:10px;">1. O que é P/VP?</h3>
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.6;">
+                P/VP é o <b>Preço dividido pelo Valor Patrimonial</b>. Um P/VP de 0.8 significa que você compra R$ 1,00 de patrimônio por R$ 0,80. É a métrica nº 1 para achar barganhas.
+            </p>
+        </div>
+        <div class="info-card info-card-red">
+            <span class="status-red">Gestão de Risco</span>
+            <h3 style="color:#ffffff; margin-top:10px;">2. Perigo das Penny Stocks</h3>
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.6;">
+                Ações abaixo de R$ 1,00 sofrem pressão para <b>agrupamento</b>. O valor que você possui não muda no agrupamento, mas a ação ganha margem para cair mais. Coloque no máximo 1% do capital.
+            </p>
         </div>
         """, unsafe_allow_html=True)
-
-# ==========================================
-# ABA 4: CALCULADORA DE RISCO (R$ 10K)
-# ==========================================
-elif opcao_menu == "🛡️ Calculadora de Risco (R$ 10k)":
-    st.title("🛡️ Calculadora de Gestão de Risco (R$ 10.000)")
-    patrimonio = st.number_input("Capital Total (R$):", value=10000.0, step=500.0)
-
-    pct_reserva = st.slider("1. Reserva de Segurança (107% CDI) %:", 50, 95, 85)
-    pct_fii = st.slider("2. Ações / FIIs de Renda %:", 5, 30, 10)
-    pct_risco = st.slider("3. Assimetria (Cripto / Penny Stocks) %:", 1, 15, 5)
-
-    if (pct_reserva + pct_fii + pct_risco) == 100:
-        val_res = patrimonio * (pct_reserva / 100)
-        val_fii = patrimonio * (pct_fii / 100)
-        val_ris = patrimonio * (pct_risco / 100)
-
-        c1, c2, c3 = st.columns(3)
-        c1.metric("1. Segurança (Renda Fixa)", f"R$ {val_res:,.2f}")
-        c2.metric("2. Proteção (Dividendos)", f"R$ {val_fii:,.2f}")
-        c3.metric("3. Assimetria (Alto Risco)", f"R$ {val_ris:,.2f}")
-
-        fig = go.Figure(data=[go.Pie(
-            labels=['Renda Fixa (107% CDI)', 'Ações/FIIs', 'Cripto/Penny Stocks'],
-            values=[val_res, val_fii, val_ris],
-            hole=.4,
-            marker_colors=['#10b981', '#3b82f6', '#ef4444']
-        )])
-        fig.update_layout(template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.error("A soma das porcentagens precisa fechar em exatamente 100%!")
+        
+    with col_p2:
+        st.markdown("""
+        <div class="info-card info-card-green">
+            <span class="status-green">Mercado Cripto</span>
+            <h3 style="color:#ffffff; margin-top:10px;">3. Fear & Greed Index</h3>
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.6;">
+                Mede o sentimento do mercado. Comprar na euforia (Greed) costuma gerar prejuízos. Comprar gradativamente no pavor (Fear) gera assimetrias gigantescas.
+            </p>
+        </div>
+        <div class="info-card info-card-blue">
+            <span class="status-amber">Estratégia Quant</span>
+            <h3 style="color:#ffffff; margin-top:10px;">4. Assimetria Positiva</h3>
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.6;">
+                Buscar investimentos onde seu risco máximo é perder R$ 200, mas o ganho potencial é virar R$ 1.500+. Você não precisa acertar todas, apenas ganhar grande nas certas.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)

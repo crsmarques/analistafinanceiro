@@ -7,35 +7,33 @@ import yfinance as yf
 # CONFIGURAÇÃO INICIAL DA PÁGINA & THEME
 # ==========================================
 st.set_page_config(
-    page_title="Analista de Bolso | Terminal Financiero",
+    page_title="Analista de Bolso | Terminal Financeiro",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS para Padrão Fintech Dark Moderno (UI/UX)
+# Custom CSS para Padrão Fintech Dark Moderno Profundo
 st.markdown("""
 <style>
     /* Reset e Fundo Dark Profundo */
     .stApp {
-        background-color: #0b0e14;
-        color: #e2e8f0;
+        background-color: #0b0e14 !important;
+        color: #e2e8f0 !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
     /* Ocultar barra lateral padrão e footers */
-    [data-testid="stSidebar"] {
-        display: none;
-    }
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    [data-testid="stSidebar"] { display: none !important; }
+    footer { visibility: hidden !important; }
+    header { visibility: hidden !important; }
 
     /* Container Principal */
     .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-        padding-left: 3rem;
-        padding-right: 3rem;
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
         max-width: 1400px;
     }
 
@@ -78,30 +76,27 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 
-    /* Estilização dos Botões do Topo (Navegação) */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #141824;
-        padding: 6px;
-        border-radius: 12px;
-        border: 1px solid #2d3548;
-        margin-bottom: 1.5rem;
+    /* Botões de Navegação Customizados */
+    div.stButton > button {
+        width: 100%;
+        height: 48px;
+        background-color: #141824 !important;
+        color: #94a3b8 !important;
+        border: 1px solid #2d3548 !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s ease-in-out !important;
     }
-    .stTabs [data-baseweb="tab"] {
-        height: 44px;
-        border-radius: 8px;
-        color: #94a3b8;
-        font-weight: 600;
-        font-size: 0.9rem;
-        border: none !important;
-        background-color: transparent;
-        padding: 0 20px;
-        transition: all 0.2s ease;
+    div.stButton > button:hover {
+        background-color: #1e2333 !important;
+        color: #ffffff !important;
+        border-color: #3b82f6 !important;
     }
-    .stTabs [aria-selected="true"] {
+    div.stButton > button:focus {
         background-color: #3b82f6 !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
     }
 
     /* Cards Finanças / Métricas */
@@ -113,7 +108,7 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     .metric-title {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #94a3b8;
@@ -121,7 +116,7 @@ st.markdown("""
         font-weight: 600;
     }
     .metric-value {
-        font-size: 1.75rem;
+        font-size: 1.6rem;
         font-weight: 700;
         color: #ffffff;
     }
@@ -167,12 +162,12 @@ st.markdown("""
     .info-card-green { border-left: 4px solid #10b981; }
     .info-card-red { border-left: 4px solid #ef4444; }
 
-    /* Tabelas estilizadas */
+    /* ESTILIZAÇÃO COMPLETA DAS TABELAS DARK (DARK MODE TOTAL) */
     [data-testid="stDataFrame"] {
-        background-color: #141824;
-        border-radius: 12px;
-        border: 1px solid #2d3548;
-        overflow: hidden;
+        background-color: #141824 !important;
+        border-radius: 12px !important;
+        border: 1px solid #2d3548 !important;
+        padding: 8px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -226,19 +221,32 @@ def get_coingecko_top_cryptos():
         return pd.DataFrame()
 
 @st.cache_data(ttl=300)
-def get_binance_btc():
+def get_btc_data():
     try:
         url = "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCBRL"
         res = requests.get(url, timeout=5).json()
+        if 'lastPrice' in res:
+            return {
+                'last_price': float(res['lastPrice']),
+                'high': float(res['highPrice']),
+                'low': float(res['lowPrice']),
+                'change_pct': float(res['priceChangePercent'])
+            }
+    except Exception:
+        pass
+    
+    try:
+        url = "https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false"
+        res = requests.get(url, timeout=5).json()
+        md = res['market_data']
         return {
-            'last_price': float(res['lastPrice']),
-            'high': float(res['highPrice']),
-            'low': float(res['lowPrice']),
-            'change_pct': float(res['priceChangePercent']),
-            'volume': float(res['volume'])
+            'last_price': float(md['current_price']['brl']),
+            'high': float(md['high_24h']['brl']),
+            'low': float(md['low_24h']['brl']),
+            'change_pct': float(md['price_change_percentage_24h'])
         }
     except Exception:
-        return None
+        return {'last_price': 0.0, 'high': 0.0, 'low': 0.0, 'change_pct': 0.0}
 
 @st.cache_data(ttl=600)
 def get_b3_stocks(tickers):
@@ -266,22 +274,38 @@ def get_b3_stocks(tickers):
     return pd.DataFrame(results)
 
 # ==========================================
-# BOTÕES/NAVEGAÇÃO NO TOPO (3 ABAS PRINCIPAIS)
+# GERENCIAMENTO DE ESTADO E BOTÕES RENOMEADOS
 # ==========================================
-tab_cripto, tab_acoes, tab_pilulas = st.tabs([
-    "🪙 Cripto & Alertas Quant", 
-    "📈 Ações B3 & Penny Stocks", 
-    "💡 Pílulas de Mercado"
-])
+if 'aba_ativa' not in st.session_state:
+    st.session_state.aba_ativa = "cripto"
+
+col_btn1, col_btn2, col_btn3 = st.columns(3)
+
+with col_btn1:
+    if st.button("🪙 Cripto"):
+        st.session_state.aba_ativa = "cripto"
+
+with col_btn2:
+    if st.button("📈 Ações B3"):
+        st.session_state.aba_ativa = "acoes"
+
+with col_btn3:
+    if st.button("💡 Pílulas de conhecimento"):
+        st.session_state.aba_ativa = "pilulas"
+
+st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+
+# ==========================================
+# CONTEÚDO DAS TELAS
+# ==========================================
 
 # ------------------------------------------
-# TAB 1: CRIPTO & ALERTAS
+# TELAS 1: CRIPTO
 # ------------------------------------------
-with tab_cripto:
+if st.session_state.aba_ativa == "cripto":
     fg_val, fg_status = get_fear_and_greed()
-    btc_data = get_binance_btc()
+    btc_data = get_btc_data()
 
-    # Grid de Métrica Superior
     c1, c2, c3, c4 = st.columns(4)
     
     with c1:
@@ -296,20 +320,20 @@ with tab_cripto:
         """, unsafe_allow_html=True)
         
     with c2:
-        btc_price = f"R$ {btc_data['last_price']:,.2f}" if btc_data else "N/A"
-        btc_var = f"{btc_data['change_pct']:+.2f}%" if btc_data else "0%"
+        btc_price = f"R$ {btc_data['last_price']:,.2f}" if btc_data['last_price'] > 0 else "N/A"
+        btc_var = f"{btc_data['change_pct']:+.2f}%"
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-title">Bitcoin (Binance BTC/BRL)</div>
+            <div class="metric-title">Bitcoin (BTC/BRL)</div>
             <div class="metric-value" style="font-size: 1.4rem;">{btc_price}</div>
             <div style="margin-top: 8px;">
-                <span class="{ 'status-green' if btc_data and btc_data['change_pct'] >= 0 else 'status-red' }">{btc_var} (24h)</span>
+                <span class="{ 'status-green' if btc_data['change_pct'] >= 0 else 'status-red' }">{btc_var} (24h)</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     with c3:
-        btc_high = f"R$ {btc_data['high']:,.2f}" if btc_data else "N/A"
+        btc_high = f"R$ {btc_data['high']:,.2f}" if btc_data['high'] > 0 else "N/A"
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-title">Máxima 24h (BTC)</div>
@@ -319,7 +343,7 @@ with tab_cripto:
         """, unsafe_allow_html=True)
 
     with c4:
-        btc_low = f"R$ {btc_data['low']:,.2f}" if btc_data else "N/A"
+        btc_low = f"R$ {btc_data['low']:,.2f}" if btc_data['low'] > 0 else "N/A"
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-title">Mínima 24h (BTC)</div>
@@ -328,7 +352,6 @@ with tab_cripto:
         </div>
         """, unsafe_allow_html=True)
 
-    # Insight do Bot
     if fg_val <= 30:
         st.markdown("""
         <div class="info-card info-card-green">
@@ -373,13 +396,13 @@ with tab_cripto:
                 'Cap. Mercado (R$)': 'R$ {:,.0f}'
             }),
             use_container_width=True,
-            height=450
+            height=480
         )
 
 # ------------------------------------------
-# TAB 2: AÇÕES B3 & PENNY STOCKS
+# TELAS 2: AÇÕES B3
 # ------------------------------------------
-with tab_acoes:
+elif st.session_state.aba_ativa == "acoes":
     st.markdown("""
     <div class="info-card info-card-blue">
         <h4 style="margin:0; color:#60a5fa;">🔎 Monitor de Microcaps, Penny Stocks & Blue Chips</h4>
@@ -408,12 +431,12 @@ with tab_acoes:
                 return "🟡 Acompanhar"
 
         df_stocks['Status do Bot'] = df_stocks.apply(classificar_acao, axis=1)
-        st.dataframe(df_stocks, use_container_width=True)
+        st.dataframe(df_stocks, use_container_width=True, height=450)
 
 # ------------------------------------------
-# TAB 3: PÍLULAS DE MERCADO
+# TELAS 3: PÍLULAS DE CONHECIMENTO
 # ------------------------------------------
-with tab_pilulas:
+elif st.session_state.aba_ativa == "pilulas":
     col_p1, col_p2 = st.columns(2)
     
     with col_p1:
@@ -434,7 +457,7 @@ with tab_pilulas:
         </div>
         """, unsafe_allow_html=True)
         
-    with col_p2:
+    with col_p1 if False else col_p2:
         st.markdown("""
         <div class="info-card info-card-green">
             <span class="status-green">Mercado Cripto</span>
@@ -450,4 +473,4 @@ with tab_pilulas:
                 Buscar investimentos onde seu risco máximo é perder R$ 200, mas o ganho potencial é virar R$ 1.500+. Você não precisa acertar todas, apenas ganhar grande nas certas.
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True

@@ -473,4 +473,4 @@ elif st.session_state.aba_ativa == "pilulas":
                 Buscar investimentos onde seu risco máximo é perder R$ 200, mas o ganho potencial é virar R$ 1.500+. Você não precisa acertar todas, apenas ganhar grande nas certas.
             </p>
         </div>
-        """, unsafe_allow_html=True
+        """, unsafe_allow_html=True)

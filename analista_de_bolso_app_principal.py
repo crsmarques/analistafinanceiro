@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS limpa
+# Estilização CSS limpa (Deloitte Standard)
 st.markdown("""
 <style>
     /* Ocultar elementos nativos desnecessários */
@@ -123,7 +123,7 @@ def get_fear_and_greed():
 def get_criptos():
     try:
         url = "https://api.coingecko.com/api/v3/coins/markets"
-        params = {'vs_currency': 'brl', 'order': 'market_cap_desc', 'per_page': 20, 'page': 1, 'sparkline': 'false'}
+        params = {'vs_currency': 'brl', 'order': 'market_cap_desc', 'per_page': 25, 'page': 1, 'sparkline': 'false'}
         res = requests.get(url, params=params, timeout=8).json()
         df = pd.DataFrame(res)
         
@@ -150,14 +150,18 @@ def get_b3(tickers):
             continue
     return pd.DataFrame(dados)
 
-# CONTEÚDO
+# ==========================================
+# CONTEÚDO DAS TELAS
+# ==========================================
+
+# 1. TELA CRIPTO
 if st.session_state.aba_ativa == "cripto":
     fg_val, fg_status = get_fear_and_greed()
     df_c, btc = get_criptos()
 
     m1, m2, m3, m4 = st.columns(4)
     with m1:
-        st.markdown(f'<div class="metric-card"><div class="metric-label">Fear & Greed</div><div class="metric-val">{fg_val}/100</div><span class="badge-amber">{fg_status.upper()}</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="metric-label">Fear & Greed Index</div><div class="metric-val">{fg_val}/100</div><span class="badge-amber">{fg_status.upper()}</span></div>', unsafe_allow_html=True)
     with m2:
         p_btc = formatar_moeda(btc['current_price']) if btc is not None else "N/A"
         v_btc = btc['price_change_percentage_24h'] if btc is not None else 0
@@ -171,26 +175,54 @@ if st.session_state.aba_ativa == "cripto":
         st.markdown(f'<div class="metric-card"><div class="metric-label">Mínima 24h</div><div class="metric-val">{l_btc}</div><span class="badge-amber">Suporte</span></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("📊 Panorama Cripto Global")
+    st.subheader("📊 Panorama Cripto & Indicações Automáticas")
+
+    # PAINEL DE FILTROS CRIPTO
+    f1_c, f2_c = st.columns([2, 2])
+    with f1_c:
+        busca_c = st.text_input("Buscar Moeda / Símbolo:").upper()
+    with f2_c:
+        filtro_sinal = st.selectbox("Filtrar por Sinal:", ["Todos", "🟢 Oportunidade (Queda)", "🔴 Esticado", "🟡 Neutro"])
 
     if not df_c.empty:
-        df_show = pd.DataFrame({
-            'Moeda': df_c['name'],
-            'Símbolo': df_c['symbol'].str.upper(),
-            'Preço (R$)': df_c['current_price'].apply(formatar_moeda),
-            'Variação 24h': df_c['price_change_percentage_24h'].apply(lambda x: f"{x:+.2f}%"),
-            'Cap. Mercado': df_c['market_cap'].apply(formatar_cap)
-        })
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=450)
+        df_show = df_c.copy()
 
+        # Função de Indicação Automática
+        def sinal_cripto(var):
+            if var < -5.0:
+                return "🟢 Oportunidade (Queda)"
+            elif var > 8.0:
+                return "🔴 Esticado"
+            return "🟡 Neutro"
+
+        df_show['Análise Bot'] = df_show['price_change_percentage_24h'].apply(sinal_cripto)
+
+        # Aplicando filtros
+        if busca_c:
+            df_show = df_show[df_show['name'].str.upper().str.contains(busca_c) | df_show['symbol'].str.upper().str.contains(busca_c)]
+        if filtro_sinal != "Todos":
+            df_show = df_show[df_show['Análise Bot'] == filtro_sinal]
+
+        df_table = pd.DataFrame({
+            'Moeda': df_show['name'],
+            'Símbolo': df_show['symbol'].str.upper(),
+            'Preço (R$)': df_show['current_price'].apply(formatar_moeda),
+            'Variação 24h': df_show['price_change_percentage_24h'].apply(lambda x: f"{x:+.2f}%"),
+            'Cap. Mercado': df_show['market_cap'].apply(formatar_cap),
+            'Análise Bot': df_show['Análise Bot']
+        })
+
+        st.dataframe(df_table, use_container_width=True, hide_index=True, height=450)
+
+# 2. TELA AÇÕES B3
 elif st.session_state.aba_ativa == "acoes":
-    st.subheader("🔎 Monitor de Ações B3")
+    st.subheader("🔎 Monitor & Filtros de Valuation B3")
 
     f1, f2, f3 = st.columns([1.5, 1.5, 2])
     with f1:
-        p_max = st.slider("Preço Máximo (R$):", 1.0, 100.0, 50.0)
+        p_max = st.slider("Preço Máximo da Ação (R$):", 1.0, 100.0, 50.0)
     with f2:
-        pvp_max = st.slider("P/VP Máximo:", 0.2, 3.0, 1.5)
+        pvp_max = st.slider("P/VP Máximo (Desconto):", 0.2, 3.0, 1.5)
     with f3:
         busca = st.text_input("Buscar Ticker / Empresa:").upper()
 
@@ -202,12 +234,14 @@ elif st.session_state.aba_ativa == "acoes":
         if busca:
             df_f = df_f[df_f['Ticker'].str.contains(busca) | df_f['Empresa'].str.upper().str.contains(busca)]
 
-        df_f['Status Bot'] = df_f.apply(lambda r: "⚡ Penny Stock" if r['Preço'] < 2.0 else ("🟢 Descontada" if 0 < r['P/VP'] < 0.85 else "🔵 Regular"), axis=1)
+        # Indicação Bot B3
+        df_f['Status Bot'] = df_f.apply(lambda r: "⚡ Penny Stock / Risco" if r['Preço'] < 2.0 else ("🟢 Descontada (P/VP < 0.85)" if 0 < r['P/VP'] < 0.85 else "🔵 Regular"), axis=1)
         df_f['Preço (R$)'] = df_f['Preço'].apply(formatar_moeda)
         df_f['DY (%)'] = df_f['DY (%)'].apply(lambda x: f"{x:.2f}%")
 
         st.dataframe(df_f[['Ticker', 'Empresa', 'Preço (R$)', 'P/VP', 'P/L', 'DY (%)', 'Status Bot']], use_container_width=True, hide_index=True, height=400)
 
+# 3. TELA PÍLULAS DE CONHECIMENTO
 elif st.session_state.aba_ativa == "pilulas":
     st.subheader("💡 Pílulas de Conhecimento Executive")
     p1, p2 = st.columns(2)

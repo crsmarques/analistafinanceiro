@@ -4,7 +4,7 @@ import pandas as pd
 import yfinance as yf
 
 # ==========================================
-# CONFIGURAÇÃO DE PÁGINA & TEMA DELOITTE
+# CONFIGURAÇÃO DE PÁGINA & TEMA EXECUTIVE (DELOITTE / GARTNER)
 # ==========================================
 st.set_page_config(
     page_title="Analista de Bolso | Executive Terminal",
@@ -13,29 +13,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS - Corporate Dark Theme (Padrão Deloitte)
+# Inject CSS para forçar Dark Theme em ABSOLUTAMENTE TUDO (incluindo o Glide Data Grid do Streamlit)
 st.markdown("""
 <style>
-    /* Reset & Fundo Carvão Executivo */
-    .stApp {
-        background-color: #0d1117 !important;
-        color: #e6edf3 !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    /* Reset Global & Fundo Carvão Deloitte Executive */
+    html, body, [data-testid="stAppViewContainer"], .stApp {
+        background-color: #0b0e14 !important;
+        color: #e2e8f0 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
     
-    /* Ocultar elementos padrão do Streamlit */
+    /* Ocultar elementos nativos do Streamlit */
     [data-testid="stSidebar"] { display: none !important; }
-    footer { visibility: hidden !important; }
-    header { visibility: hidden !important; }
+    footer { visibility: hidden !important; display: none !important; }
+    header { visibility: hidden !important; display: none !important; }
 
     .block-container {
-        padding: 1.8rem 3rem !important;
+        padding: 1.5rem 3rem !important;
         max-width: 1400px;
     }
 
-    /* Banner Superior Deloitte Executive */
+    /* Banner Superior Deloitte / Gartner Executive Style */
     .deloitte-header {
-        background: #161b22;
+        background: #141824;
         border-left: 4px solid #86bc25; /* Deloitte Green */
         border-radius: 8px;
         padding: 1.2rem 1.8rem;
@@ -43,72 +43,113 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        border-top: 1px solid #2d3548;
+        border-right: 1px solid #2d3548;
+        border-bottom: 1px solid #2d3548;
     }
     .deloitte-title { font-size: 1.4rem; font-weight: 700; color: #ffffff; margin: 0; letter-spacing: -0.5px; }
     .deloitte-title span { color: #86bc25; }
-    .deloitte-subtitle { font-size: 0.85rem; color: #8b949e; margin-top: 4px; }
+    .deloitte-subtitle { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
 
-    /* Estilização dos Botões da Top Navbar */
+    /* Customização dos Botões da Top Navbar (Unificados e Alinhados) */
     div.stButton > button {
         width: 100%;
-        height: 42px;
-        background-color: #161b22 !important;
-        color: #8b949e !important;
-        border: 1px solid #30363d !important;
+        height: 44px;
+        background-color: #141824 !important;
+        color: #94a3b8 !important;
+        border: 1px solid #2d3548 !important;
         border-radius: 6px !important;
         font-weight: 600 !important;
         font-size: 0.9rem !important;
-        transition: all 0.2s ease;
+        transition: all 0.2s ease-in-out;
     }
     div.stButton > button:hover {
-        background-color: #21262d !important;
+        background-color: #1e2333 !important;
         color: #ffffff !important;
         border-color: #86bc25 !important;
     }
-    div.stButton > button:focus {
+    div.stButton > button:focus, div.stButton > button:active {
         background-color: #86bc25 !important;
-        color: #0d1117 !important;
+        color: #0b0e14 !important;
         font-weight: 700 !important;
         border-color: #86bc25 !important;
     }
 
     /* Cards de Métricas Executive */
     .metric-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
+        background-color: #141824;
+        border: 1px solid #2d3548;
         border-radius: 8px;
         padding: 1.1rem;
         margin-bottom: 1rem;
     }
-    .metric-label { font-size: 0.72rem; text-transform: uppercase; color: #8b949e; font-weight: 600; letter-spacing: 0.08em; }
+    .metric-label { font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 0.08em; }
     .metric-val { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin: 6px 0; }
     
-    /* Status Badges Corporativas */
+    /* Badges Corporativas */
     .badge-green { background: rgba(134, 188, 37, 0.15); color: #86bc25; border: 1px solid rgba(134, 188, 37, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-    .badge-amber { background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-    .badge-red { background: rgba(248, 81, 73, 0.15); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-red { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
 
-    /* Inputs escuros alinhados */
+    /* Inputs Escuros */
     div[data-baseweb="select"] > div, input {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
+        background-color: #141824 !important;
+        border: 1px solid #2d3548 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
     }
 
-    /* ESTILIZAÇÃO COMPLETA DA TABELA DARK NATIVA */
+    /* FORÇAR A ELIMINAÇÃO TOTAL DO BLOCO BRANCO DA TABELA (GLIDE DATA GRID OVERRIDE) */
     div[data-testid="stDataFrame"] {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
+        background-color: #141824 !important;
+        border: 1px solid #2d3548 !important;
         border-radius: 8px !important;
-        padding: 6px !important;
+        padding: 8px !important;
+    }
+    
+    /* Hack CSS para forçar o Canvas/IFrame do Streamlit DataFrame a ficar escuro */
+    div[data-testid="stDataFrame"] > div {
+        background-color: #141824 !important;
+    }
+    
+    /* Tabela HTML Customizada 100% Dark para garantir que NUNCA fique branca */
+    .deloitte-table-container {
+        background-color: #141824;
+        border: 1px solid #2d3548;
+        border-radius: 8px;
+        overflow-x: auto;
+        padding: 0;
+        margin-top: 15px;
+    }
+    .deloitte-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #e2e8f0;
+        font-size: 0.88rem;
+    }
+    .deloitte-table th {
+        background-color: #1e2333;
+        color: #86bc25; /* Deloitte Green Accent */
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #2d3548;
+    }
+    .deloitte-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #1e2333;
+    }
+    .deloitte-table tr:hover {
+        background-color: #1b202e;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# HEADER
+# HEADER EXECUTIVE
 # ==========================================
 st.markdown("""
 <div class="deloitte-header">
@@ -117,18 +158,18 @@ st.markdown("""
         <div class="deloitte-subtitle">Terminal de Inteligência Financeira, Valuation & Análises Quantitativas</div>
     </div>
     <div>
-        <span class="badge-green">DELOITTE STANDARD UI</span>
+        <span class="badge-green">DELOITTE & GARTNER STANDARD</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# NAVEGAÇÃO DE TOPO (TAB NAVBAR INTEGRADAS)
+# TOP NAVBAR (3 BOTÕES PERFEITAMENTE ALINHADOS E AGRUPADOS)
 # ==========================================
 if 'aba_ativa' not in st.session_state:
     st.session_state.aba_ativa = "cripto"
 
-c_nav1, c_nav2, c_nav3, _ = st.columns([1.3, 1.3, 1.8, 4])
+c_nav1, c_nav2, c_nav3, _ = st.columns([1.5, 1.5, 2, 4])
 
 with c_nav1:
     if st.button("🪙 Mercado Cripto"):
@@ -145,7 +186,7 @@ with c_nav3:
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
 # ==========================================
-# FUNÇÕES DE COLETA E FORMATAÇÃO DE DADOS
+# FUNÇÕES DE DATA & FORMATAÇÃO PT-BR
 # ==========================================
 def formatar_moeda_br(valor):
     try:
@@ -286,22 +327,41 @@ if st.session_state.aba_ativa == "cripto":
     st.subheader("📊 Panorama do Mercado Global de Criptoativos")
 
     if not df_crypto.empty:
-        df_display = df_crypto[['name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap']].copy()
-        
-        df_display['Moeda'] = df_display['name']
-        df_display['Símbolo'] = df_display['symbol'].str.upper()
-        df_display['Preço (R$)'] = df_display['current_price'].apply(formatar_moeda_br)
-        df_display['Variação 24h'] = df_display['price_change_percentage_24h'].apply(lambda x: f"{x:+.2f}%")
-        df_display['Cap. Mercado'] = df_display['market_cap'].apply(formatar_cap_mercado)
+        rows_html = ""
+        for _, row in df_crypto.iterrows():
+            var = row.get('price_change_percentage_24h', 0) or 0
+            var_color = "#86bc25" if var >= 0 else "#ef4444"
+            var_badge = f"<span style='color:{var_color}; font-weight:600;'>{var:+.2f}%</span>"
+            
+            rows_html += f"""
+            <tr>
+                <td><b>{row['name']}</b></td>
+                <td><span style='color:#94a3b8;'>{row['symbol'].upper()}</span></td>
+                <td>{formatar_moeda_br(row['current_price'])}</td>
+                <td>{var_badge}</td>
+                <td>{formatar_cap_mercado(row['market_cap'])}</td>
+            </tr>
+            """
 
-        df_show = df_display[['Moeda', 'Símbolo', 'Preço (R$)', 'Variação 24h', 'Cap. Mercado']]
-
-        st.dataframe(
-            df_show,
-            use_container_width=True,
-            height=480,
-            hide_index=True
-        )
+        table_html = f"""
+        <div class="deloitte-table-container">
+            <table class="deloitte-table">
+                <thead>
+                    <tr>
+                        <th>Moeda</th>
+                        <th>Símbolo</th>
+                        <th>Preço (R$)</th>
+                        <th>Variação 24h</th>
+                        <th>Cap. Mercado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows_html}
+                </tbody>
+            </table>
+        </div>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
 
 # ------------------------------------------
 # 2. TELA AÇÕES B3
@@ -333,24 +393,51 @@ elif st.session_state.aba_ativa == "acoes":
                 df_filtered['Empresa'].str.upper().str.contains(busca)
             ]
 
-        def indicar_status(row):
-            if row['Preço (R$)'] < 2.0:
-                return "⚡ Penny Stock / Risco"
-            elif 0 < row['P/VP'] < 0.85:
-                return "🟢 Descontada (P/VP < 0.85)"
-            return "🔵 Sólida / Regular"
+        rows_html = ""
+        for _, row in df_filtered.iterrows():
+            preco = row['Preço (R$)']
+            pvp = row['P/VP']
+            
+            if preco < 2.0:
+                status = "<span class='badge-red'>⚡ Penny Stock</span>"
+            elif 0 < pvp < 0.85:
+                status = "<span class='badge-green'>🟢 Descontada (P/VP < 0.85)</span>"
+            else:
+                status = "<span class='badge-amber'>🔵 Regular</span>"
 
-        df_filtered['Status Bot'] = df_filtered.apply(indicar_status, axis=1)
+            rows_html += f"""
+            <tr>
+                <td><b>{row['Ticker']}</b></td>
+                <td><span style='color:#94a3b8;'>{row['Empresa']}</span></td>
+                <td>{formatar_moeda_br(row['Preço (R$)'])}</td>
+                <td>{row['P/VP'] if row['P/VP'] > 0 else 'N/A'}</td>
+                <td>{row['P/L'] if row['P/L'] > 0 else 'N/A'}</td>
+                <td style='color:#86bc25; font-weight:600;'>{row['DY (%)']:.2f}%</td>
+                <td>{status}</td>
+            </tr>
+            """
 
-        df_filtered['Preço (R$)'] = df_filtered['Preço (R$)'].apply(formatar_moeda_br)
-        df_filtered['DY (%)'] = df_filtered['DY (%)'].apply(lambda x: f"{x:.2f}%")
-
-        st.dataframe(
-            df_filtered[['Ticker', 'Empresa', 'Preço (R$)', 'P/VP', 'P/L', 'DY (%)', 'Status Bot']],
-            use_container_width=True,
-            height=420,
-            hide_index=True
-        )
+        table_html = f"""
+        <div class="deloitte-table-container">
+            <table class="deloitte-table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Empresa</th>
+                        <th>Preço (R$)</th>
+                        <th>P/VP</th>
+                        <th>P/L</th>
+                        <th>DY (%)</th>
+                        <th>Status do Bot</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows_html}
+                </tbody>
+            </table>
+        </div>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
 
 # ------------------------------------------
 # 3. TELA PÍLULAS DE CONHECIMENTO
@@ -363,13 +450,13 @@ elif st.session_state.aba_ativa == "pilulas":
         st.markdown("""
         <div class="metric-card" style="margin-bottom: 15px;">
             <h4 style="color:#86bc25; margin-top:0;">1. O que é P/VP?</h4>
-            <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.5;">
                 <b>Preço sobre Valor Patrimonial</b>. Métrica fundamentalista que indica se o ativo está sendo negociado abaixo do seu valor contábil.
             </p>
         </div>
         <div class="metric-card">
-            <h4 style="color:#f85149; margin-top:0;">2. Perigo das Penny Stocks</h4>
-            <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
+            <h4 style="color:#ef4444; margin-top:0;">2. Perigo das Penny Stocks</h4>
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.5;">
                 Ativos cotados abaixo de R$ 1,00 apresentam volatilidade atípica e risco de agrupamento compulsório. Exige alocação marginal de capital.
             </p>
         </div>
@@ -379,13 +466,13 @@ elif st.session_state.aba_ativa == "pilulas":
         st.markdown("""
         <div class="metric-card" style="margin-bottom: 15px;">
             <h4 style="color:#86bc25; margin-top:0;">3. Fear & Greed Index</h4>
-            <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.5;">
                 Métrica quantitativa de sentimento de mercado. Períodos de pavor generalizado costumam oferecer pontos de entrada com assimetria favorável.
             </p>
         </div>
         <div class="metric-card">
-            <h4 style="color:#d29922; margin-top:0;">4. Assimetria de Risco Construtiva</h4>
-            <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
+            <h4 style="color:#f59e0b; margin-top:0;">4. Assimetria de Risco Construtiva</h4>
+            <p style="color:#94a3b8; font-size:0.9rem; line-height:1.5;">
                 Estratégia de portfólio onde a máxima perda é rigidamente delimitada em relação ao potencial multiplicador de ganho.
             </p>
         </div>

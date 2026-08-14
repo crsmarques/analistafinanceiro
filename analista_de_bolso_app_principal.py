@@ -4,23 +4,23 @@ import pandas as pd
 import yfinance as yf
 
 # ==========================================
-# CONFIGURAÇÃO DA PÁGINA & TEMA
+# CONFIGURAÇÃO DE PÁGINA & TEMA DELOITTE
 # ==========================================
 st.set_page_config(
-    page_title="Analista de Bolso | Terminal",
-    page_icon="⚡",
+    page_title="Analista de Bolso | Executive Terminal",
+    page_icon="🟢",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS para forçar Dark Mode nativo e botões limpos
+# Custom CSS - Corporate Dark Theme (Padrão Deloitte)
 st.markdown("""
 <style>
-    /* Reset & Fundo Dark */
+    /* Reset & Fundo Carvão Executivo */
     .stApp {
         background-color: #0d1117 !important;
         color: #e6edf3 !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     
     /* Ocultar elementos padrão do Streamlit */
@@ -29,92 +29,117 @@ st.markdown("""
     header { visibility: hidden !important; }
 
     .block-container {
-        padding: 1.5rem 2rem !important;
-        max-width: 1350px;
+        padding: 1.8rem 3rem !important;
+        max-width: 1400px;
     }
 
-    /* Banner do Topo */
-    .top-header {
+    /* Banner Superior Deloitte Executive */
+    .deloitte-header {
         background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
+        border-left: 4px solid #86bc25; /* Deloitte Green */
+        border-radius: 8px;
         padding: 1.2rem 1.8rem;
         margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
-    .top-header h2 { margin: 0; font-size: 1.5rem; color: #ffffff; font-weight: 700; }
-    .top-header p { margin: 4px 0 0 0; font-size: 0.85rem; color: #8b949e; }
+    .deloitte-title { font-size: 1.4rem; font-weight: 700; color: #ffffff; margin: 0; letter-spacing: -0.5px; }
+    .deloitte-title span { color: #86bc25; }
+    .deloitte-subtitle { font-size: 0.85rem; color: #8b949e; margin-top: 4px; }
 
-    /* Estilização dos Botões de Navegação do Topo */
+    /* Estilização dos Botões da Top Navbar */
     div.stButton > button {
         width: 100%;
-        height: 44px;
+        height: 42px;
         background-color: #161b22 !important;
         color: #8b949e !important;
         border: 1px solid #30363d !important;
-        border-radius: 10px !important;
+        border-radius: 6px !important;
         font-weight: 600 !important;
-        font-size: 0.95rem !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease;
     }
     div.stButton > button:hover {
         background-color: #21262d !important;
         color: #ffffff !important;
-        border-color: #58a6ff !important;
+        border-color: #86bc25 !important;
+    }
+    div.stButton > button:focus {
+        background-color: #86bc25 !important;
+        color: #0d1117 !important;
+        font-weight: 700 !important;
+        border-color: #86bc25 !important;
     }
 
-    /* Cards de Métricas do Topo */
+    /* Cards de Métricas Executive */
     .metric-card {
         background-color: #161b22;
         border: 1px solid #30363d;
-        border-radius: 12px;
+        border-radius: 8px;
         padding: 1.1rem;
         margin-bottom: 1rem;
     }
-    .metric-label { font-size: 0.75rem; text-transform: uppercase; color: #8b949e; font-weight: 600; letter-spacing: 0.05em; }
+    .metric-label { font-size: 0.72rem; text-transform: uppercase; color: #8b949e; font-weight: 600; letter-spacing: 0.08em; }
     .metric-val { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin: 6px 0; }
     
-    /* Badges */
-    .badge-green { background: rgba(46, 160, 67, 0.15); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
-    .badge-amber { background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
-    .badge-red { background: rgba(248, 81, 73, 0.15); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    /* Status Badges Corporativas */
+    .badge-green { background: rgba(134, 188, 37, 0.15); color: #86bc25; border: 1px solid rgba(134, 188, 37, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-amber { background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-red { background: rgba(248, 81, 73, 0.15); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
 
-    /* Inputs escuros */
+    /* Inputs escuros alinhados */
     div[data-baseweb="select"] > div, input {
         background-color: #161b22 !important;
         border: 1px solid #30363d !important;
         color: #ffffff !important;
+        border-radius: 6px !important;
+    }
+
+    /* ESTILIZAÇÃO COMPLETA DA TABELA DARK NATIVA */
+    div[data-testid="stDataFrame"] {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
         border-radius: 8px !important;
+        padding: 6px !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# HEADER PRINCIPAL
+# HEADER
 # ==========================================
 st.markdown("""
-<div class="top-header">
-    <h2>⚡ Analista de Bolso</h2>
-    <p>Terminal de Inteligência Financeira & Análises Quantitativas</p>
+<div class="deloitte-header">
+    <div>
+        <div class="deloitte-title">Analista de Bolso <span>.</span></div>
+        <div class="deloitte-subtitle">Terminal de Inteligência Financeira, Valuation & Análises Quantitativas</div>
+    </div>
+    <div>
+        <span class="badge-green">DELOITTE STANDARD UI</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# NAVEGAÇÃO DE TOPO (BOTÕES EM COLUNAS)
+# NAVEGAÇÃO DE TOPO (TAB NAVBAR INTEGRADAS)
 # ==========================================
 if 'aba_ativa' not in st.session_state:
     st.session_state.aba_ativa = "cripto"
 
-col_b1, col_b2, col_b3, _ = st.columns([1.2, 1.2, 1.5, 3])
+c_nav1, c_nav2, c_nav3, _ = st.columns([1.3, 1.3, 1.8, 4])
 
-with col_b1:
-    if st.button("🪙 Cripto"):
+with c_nav1:
+    if st.button("🪙 Mercado Cripto"):
         st.session_state.aba_ativa = "cripto"
 
-with col_b2:
+with c_nav2:
     if st.button("📈 Ações B3"):
         st.session_state.aba_ativa = "acoes"
 
-with col_b3:
-    if st.button("💡 Pílulas de conhecimento"):
+with c_nav3:
+    if st.button("💡 Pílulas de Conhecimento"):
         st.session_state.aba_ativa = "pilulas"
 
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
@@ -123,14 +148,12 @@ st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 # FUNÇÕES DE COLETA E FORMATAÇÃO DE DADOS
 # ==========================================
 def formatar_moeda_br(valor):
-    """Formata números para padrão pt-BR de moeda (ex: R$ 329.676,00)"""
     try:
         return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except Exception:
         return "R$ 0,00"
 
 def formatar_cap_mercado(valor):
-    """Transforma números gigantes em Bilhões/Milhões limpos"""
     try:
         if valor >= 1_000_000_000:
             return f"R$ {valor / 1_000_000_000:,.2f}".replace(".", ",") + " Bi"
@@ -154,7 +177,6 @@ def get_fear_and_greed():
 
 @st.cache_data(ttl=300)
 def get_coingecko_data():
-    """Puxa o Top 20 Criptos + Dados de BTC em uma só chamada para evitar N/A"""
     try:
         url = "https://api.coingecko.com/api/v3/coins/markets"
         params = {
@@ -168,7 +190,6 @@ def get_coingecko_data():
         res = requests.get(url, params=params, timeout=8)
         if res.status_code == 200:
             df = pd.DataFrame(res.json())
-            # Extraindo dados do Bitcoin para os cards superiores
             btc_row = df[df['symbol'] == 'btc']
             btc_info = {}
             if not btc_row.empty:
@@ -262,10 +283,9 @@ if st.session_state.aba_ativa == "cripto":
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("📊 Top Criptomoedas (Mercado Global)")
+    st.subheader("📊 Panorama do Mercado Global de Criptoativos")
 
     if not df_crypto.empty:
-        # Formatação dos dados da tabela sem as 'trinta mil vírgulas'
         df_display = df_crypto[['name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap']].copy()
         
         df_display['Moeda'] = df_display['name']
@@ -287,7 +307,7 @@ if st.session_state.aba_ativa == "cripto":
 # 2. TELA AÇÕES B3
 # ------------------------------------------
 elif st.session_state.aba_ativa == "acoes":
-    st.subheader("🔎 Monitor de Ações B3")
+    st.subheader("🔎 Monitor de Múltiplos & Valuation B3")
 
     col1, col2, col3 = st.columns([1.5, 1.5, 2])
     with col1:
@@ -315,14 +335,13 @@ elif st.session_state.aba_ativa == "acoes":
 
         def indicar_status(row):
             if row['Preço (R$)'] < 2.0:
-                return "⚡ Penny Stock"
+                return "⚡ Penny Stock / Risco"
             elif 0 < row['P/VP'] < 0.85:
-                return "🟢 Descontada"
-            return "🔵 Normal"
+                return "🟢 Descontada (P/VP < 0.85)"
+            return "🔵 Sólida / Regular"
 
         df_filtered['Status Bot'] = df_filtered.apply(indicar_status, axis=1)
 
-        # Formatação B3
         df_filtered['Preço (R$)'] = df_filtered['Preço (R$)'].apply(formatar_moeda_br)
         df_filtered['DY (%)'] = df_filtered['DY (%)'].apply(lambda x: f"{x:.2f}%")
 
@@ -337,21 +356,21 @@ elif st.session_state.aba_ativa == "acoes":
 # 3. TELA PÍLULAS DE CONHECIMENTO
 # ------------------------------------------
 elif st.session_state.aba_ativa == "pilulas":
-    st.subheader("💡 Conceitos Essenciais de Mercado")
+    st.subheader("💡 Diretrizes & Mapeamento de Conceitos")
     c1, c2 = st.columns(2)
 
     with c1:
         st.markdown("""
         <div class="metric-card" style="margin-bottom: 15px;">
-            <h4 style="color:#58a6ff; margin-top:0;">1. O que é P/VP?</h4>
+            <h4 style="color:#86bc25; margin-top:0;">1. O que é P/VP?</h4>
             <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
-                <b>Preço sobre Valor Patrimonial</b>. Um P/VP de 0.8 indica que você está comprando R$ 1,00 da empresa por R$ 0,80 (desconto de 20%).
+                <b>Preço sobre Valor Patrimonial</b>. Métrica fundamentalista que indica se o ativo está sendo negociado abaixo do seu valor contábil.
             </p>
         </div>
         <div class="metric-card">
             <h4 style="color:#f85149; margin-top:0;">2. Perigo das Penny Stocks</h4>
             <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
-                Ações baratas (< R$ 1,00) têm alta volatilidade e risco de agrupamento. Trate sempre com gestão de risco estrita.
+                Ativos cotados abaixo de R$ 1,00 apresentam volatilidade atípica e risco de agrupamento compulsório. Exige alocação marginal de capital.
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -359,15 +378,15 @@ elif st.session_state.aba_ativa == "pilulas":
     with c2:
         st.markdown("""
         <div class="metric-card" style="margin-bottom: 15px;">
-            <h4 style="color:#3fb950; margin-top:0;">3. Fear & Greed Index</h4>
+            <h4 style="color:#86bc25; margin-top:0;">3. Fear & Greed Index</h4>
             <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
-                Mede a emoção do mercado. Momentos de Medo Extremo tendem a ser melhores para compras graduais do que momentos de Euforia.
+                Métrica quantitativa de sentimento de mercado. Períodos de pavor generalizado costumam oferecer pontos de entrada com assimetria favorável.
             </p>
         </div>
         <div class="metric-card">
-            <h4 style="color:#d29922; margin-top:0;">4. Assimetria de Risco</h4>
+            <h4 style="color:#d29922; margin-top:0;">4. Assimetria de Risco Construtiva</h4>
             <p style="color:#8b949e; font-size:0.9rem; line-height:1.5;">
-                Buscar operações onde o risco é controlado (ex: R$ 200) e o potencial de retorno é multiplicado (ex: R$ 1.500+).
+                Estratégia de portfólio onde a máxima perda é rigidamente delimitada em relação ao potencial multiplicador de ganho.
             </p>
         </div>
         """, unsafe_allow_html=True)
